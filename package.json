@@ -1,0 +1,40 @@
+{
+  "name": "@utiliread/event-source",
+  "version": "1.0.0-rc.1",
+  "source": "src/index.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "prettier": "prettier --write .",
+    "clean": "rimraf dist"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@utiliread/http": "^1.28.0",
+    "@utiliread/json": "^1.3.0",
+    "prettier": "^3.2.4",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.21.3",
+    "tslib": "^2.7.0",
+    "typescript": "^6.0.2"
+  },
+  "peerDependencies": {
+    "@utiliread/http": "^1.28.0",
+    "@utiliread/json": "^1.3.0"
+  },
+  "dependencies": {
+    "@microsoft/fetch-event-source": "^2.0.1"
+  }
+}
