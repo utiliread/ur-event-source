@@ -12,8 +12,16 @@ type EventHandler<T = any> = (event: T) => void;
 type TimeoutHandle = ReturnType<typeof setTimeout>;
 type Subscription = { dispose: () => void };
 
+type Logger = {
+  debug: (message: string, ...rest: any[]) => void;
+  info: (message: string, ...rest: any[]) => void;
+  warn: (message: string, ...rest: any[]) => void;
+  error: (message: string, ...rest: any[]) => void;
+};
+
 export interface Options {
   fetch: Fetch;
+  logger: Logger;
   reconnectDelay: number;
 }
 
@@ -41,7 +49,12 @@ export class EventSource {
     private streamUrl: string,
     options?: Partial<Options>,
   ) {
-    this.options = { fetch: fetch, reconnectDelay: 3000, ...options };
+    this.options = {
+      fetch: fetch,
+      reconnectDelay: 3000,
+      logger: console,
+      ...options,
+    };
   }
 
   async connect(signal?: AbortSignal) {
@@ -73,13 +86,21 @@ export class EventSource {
       response.headers.get("content-type") === EventStreamContentType
     ) {
       this.isConnected = true;
+      this.options.logger.info(`Connected to event stream ${this.streamUrl}`);
     } else {
+      this.options.logger.error(
+        `Failed to connect to event stream ${this.streamUrl}. Status: ${response.status}`,
+      );
       throw new HttpError(response.status);
     }
   }
 
   private onError(error: any) {
     this.isConnected = false;
+    this.options.logger.warn(
+      "Event stream connection lost. Attempting to reconnect...",
+      error,
+    );
 
     // do nothing to automatically retry or return a specific retry interval here.
     return this.options.reconnectDelay;
@@ -88,6 +109,9 @@ export class EventSource {
   private onMessage(message: EventSourceMessage) {
     if (message.event) {
       const handlers = this.subscriptions.get(message.event);
+      this.options.logger.debug(
+        `Received event '${message.event}' message, dispatching to ${handlers?.size || 0} handlers.`,
+      );
       if (handlers) {
         handlers.forEach((eventType, handler) => {
           const data = deserializeString(message.data, eventType);
@@ -96,6 +120,7 @@ export class EventSource {
       }
     } else {
       const comment = JSON.parse(message.data);
+      this.options.logger.debug(`Received comment '${comment}' message.`);
     }
   }
 
@@ -108,6 +133,8 @@ export class EventSource {
     handler: EventHandler<T>,
   ): Subscription {
     const eventName = eventType.eventName;
+
+    this.options.logger.debug(`Subscribing to event '${eventName}'`);
 
     // Add handler to our map
     if (!this.subscriptions.has(eventName)) {
