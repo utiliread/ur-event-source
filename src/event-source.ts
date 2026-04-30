@@ -60,6 +60,7 @@ export class EventSource {
         onerror: this.onError.bind(this),
         onmessage: this.onMessage.bind(this),
         signal: signal,
+        openWhenHidden: true, // Keep connection open even when the page is not visible
       });
 
       this.created = true;
